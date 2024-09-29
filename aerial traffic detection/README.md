@@ -70,6 +70,12 @@ Press 'q' to save and exit.
 python density_calculation.py path/to/your/video.mp4
 ```
 
+### Example Output
+
+[Click here to watch the output video](output.mp4)
+[Click here to watch the output video](output2.mp4)
+
+
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
