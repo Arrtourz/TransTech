@@ -1,0 +1,39 @@
+# Traffic Volume Analysis Tool
+
+## Overview
+
+The Traffic Volume Analysis Tool is a sophisticated computer vision application designed to analyze and quantify vehicle traffic in video footage. Utilizing state-of-the-art object detection and tracking algorithms, this tool provides accurate traffic volume measurements for urban planning, traffic management, and transportation research.
+
+## Prerequisites
+
+- NVIDIA GPU with CUDA support
+- CUDA Toolkit 12.4 or compatible version
+- Python 3.10 or later
+
+## Installation
+
+conda create -n traffic_analysis python=3.10
+conda activate traffic_analysis
+
+conda install pytorch torchvision torchaudio pytorch-cuda=12.4 -c pytorch -c nvidia
+# make sure to install the correct version of torch and torchvision
+
+conda install -r .\requirements.txt
+
+- Use the interactive interface to define detection areas. Press 'q' to save and exit.
+
+python adjust_detection_area_box.py path/to/your/video.mp4
+
+python adjust_detection_area_line.py path/to/your/video.mp4 
+
+- Traffic Volume Detection. Press 'q' to save and exit.
+
+Box Detection Mode:
+python volumn_calculation.py path/to/your/video.mp4 box --box_file area_box.json
+
+
+Line Detection Mode:
+python volumn_calculation.py path/to/your/video.mp4 lines --lines_file area_lines.json
+
+-Traffic Desity Detection. Press 'q' to save and exit.
+python density_calculation.py path/to/your/video.mp4
