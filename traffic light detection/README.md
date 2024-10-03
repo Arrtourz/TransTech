@@ -18,7 +18,7 @@ Use the following command to detect traffic lights in a sample video:
 python detect_video_simple.py sample\sample.mp4
 ```
 
-### 3. Draw Bounding Boxes and Export Video
+### 3. Draw Bounding Boxes and Export Box as .csv
 Use the following command to draw bounding boxes around detected traffic lights and export the box:
 
 ```bash
