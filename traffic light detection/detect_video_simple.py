@@ -1,103 +1,88 @@
 import cv2
 import numpy as np
-import json
-import os
-import argparse
+from ultralytics import YOLO
 
-def adjust_box(video_path):
-    # Open the video file
-    cap = cv2.VideoCapture(video_path)
-    
-    # Read the first frame
-    ret, frame = cap.read()
-    if not ret:
-        print("Failed to read the video")
-        return None
-    
-    # Get frame dimensions
-    height, width = frame.shape[:2]
-    
-    # Initialize box (as a rectangle)
-    box = np.array([(width//4, height//4), (3*width//4, height//4), 
-                    (3*width//4, 3*height//4), (width//4, 3*height//4)], dtype=np.int32)
-    
-    selected_point = None
+# Load YOLOv8 model
+model = YOLO('models/best6.pt')
 
-    def draw_box():
-        overlay = frame.copy()
-        cv2.polylines(overlay, [box], True, (0, 255, 0), 2)
-        for i, point in enumerate(box):
-            cv2.circle(overlay, tuple(point), 5, (255, 255, 0), -1)
-            cv2.putText(overlay, f'{i+1}', tuple(point), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-        return cv2.addWeighted(frame, 0.6, overlay, 0.4, 0)
+def process_frame(frame, conf_threshold=0.3):
+    # Perform detection
+    results = model(frame, conf=conf_threshold)
 
-    def mouse_callback(event, x, y, flags, param):
-        nonlocal selected_point
-        if event == cv2.EVENT_LBUTTONDOWN:
-            for i, point in enumerate(box):
-                if np.linalg.norm(point - np.array([x, y])) < 10:
-                    selected_point = i
-                    return
-        elif event == cv2.EVENT_MOUSEMOVE:
-            if selected_point is not None:
-                box[selected_point] = [x, y]
-        elif event == cv2.EVENT_LBUTTONUP:
-            selected_point = None
-
-    cv2.namedWindow('Adjust Box')
-    cv2.setMouseCallback('Adjust Box', mouse_callback)
-
-    while True:
-        display = draw_box()
-        cv2.imshow('Adjust Box', display)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
-
-    cv2.destroyAllWindows()
-    cap.release()
-
-    return box
-
-def export_to_json(box, output_path):
-    box_dict = {
-        "top_left": box[0].tolist(),
-        "top_right": box[1].tolist(),
-        "bottom_right": box[2].tolist(),
-        "bottom_left": box[3].tolist()
+    # Define color mapping
+    color_map = {
+        'red': (0, 0, 255),     # Red
+        'yellow': (0, 255, 255),# Yellow
+        'green': (0, 255, 0)    # Green
     }
-    
-    with open(output_path, 'w') as f:
-        json.dump(box_dict, f, indent=4)
-    
-    print(f"Box coordinates exported to {output_path}")
+
+    for r in results:
+        boxes = r.boxes
+        for box in boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            cls = int(box.cls)
+            conf = float(box.conf)
+
+            class_name = model.names[cls]
+            color = color_map.get(class_name, (255, 255, 255))
+
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+
+            label = f"{class_name} {conf:.2f}"
+            (text_width, text_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            
+            label_bg_left = x1
+            label_bg_top = y1 - text_height - 5
+            label_bg_right = label_bg_left + text_width + 5
+            label_bg_bottom = label_bg_top + text_height + 5
+
+            label_bg_top = max(label_bg_top, 0)
+            label_bg_left = max(label_bg_left, 0)
+
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (label_bg_left, label_bg_top), (label_bg_right, label_bg_bottom), color, -1)
+            cv2.addWeighted(overlay, 0.6, frame, 0.4, 0, frame)
+
+            cv2.putText(frame, label, (label_bg_left + 2, label_bg_bottom - 2), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+
+    return frame
 
 def main():
-    parser = argparse.ArgumentParser(description='Draw a box on a video frame and export coordinates to JSON.')
-    parser.add_argument('video_path', type=str, help='Path to the input video file')
-    parser.add_argument('--output', type=str, help='Path to output JSON file (optional)')
-    
-    args = parser.parse_args()
+    video_path = 'sample/sample.mp4'
+    cap = cv2.VideoCapture(video_path)
 
-    video_path = args.video_path
-    result = adjust_box(video_path)
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
 
-    if result is not None:
-        print("Box coordinates:")
-        print(result.tolist())
-        
-        if args.output:
-            json_path = args.output
-        else:
-            # Generate default output JSON file path
-            video_dir = os.path.dirname(video_path)
-            video_name = os.path.splitext(os.path.basename(video_path))[0]
-            json_path = os.path.join(video_dir, f"{video_name}_box.json")
-        
-        # Export to JSON
-        export_to_json(result, json_path)
-    else:
-        print("Failed to adjust the box.")
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter('output_traffic_lights.mp4', fourcc, fps, (frame_width, frame_height))
+
+    frame_count = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        processed_frame = process_frame(frame)
+        out.write(processed_frame)
+
+        # Display the processed frame
+        cv2.imshow('Traffic Light Detection', processed_frame)
+
+        frame_count += 1
+        if frame_count % 100 == 0:
+            print(f"Processed {frame_count} frames")
+
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+    print("Video processing completed. Output saved as 'output_traffic_lights.mp4'")
 
 if __name__ == "__main__":
     main()
