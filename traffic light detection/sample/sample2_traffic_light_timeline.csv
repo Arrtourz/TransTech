@@ -1,0 +1,5 @@
+State,Start Time,Duration,End Time
+green,0.03s,3.45s,3.48s
+yellow,3.48s,2.86s,6.34s
+green,6.34s,0.14s,6.48s
+red,6.48s,0.79s,7.28s
