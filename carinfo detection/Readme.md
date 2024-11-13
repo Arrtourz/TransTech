@@ -1,5 +1,7 @@
 ### Project Execution Sequence and Operation Guide
 
+-Download files from link under 'data' and 'models' folder.
+
 #### 0. Adjust Detection Area Line
    - Run the `adjust_detection_area_line.py` script.
    - This script allows users to adjust the detection area line in the video.
