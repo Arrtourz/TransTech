@@ -1,0 +1,7 @@
+opencv-python==4.10.0.84
+numpy==1.25.0
+ultralytics==8.2.101
+easyocr==1.7.2
+matplotlib==3.9.2
+openai==0.28.0
+torch==2.4.1

@@ -1,0 +1,20 @@
+Image: vehicle_24_frame_179
+Plate: JLK2767
+Confidence: 0.60
+--------------------------------------------------
+Image: vehicle_33_frame_240
+Plate: SOYNTOV
+Confidence: 0.16
+--------------------------------------------------
+Image: vehicle_38_frame_306
+Plate: RGG-7509
+Confidence: 0.65
+--------------------------------------------------
+Image: vehicle_53_frame_408
+Plate: XG888
+Confidence: 0.18
+--------------------------------------------------
+Image: vehicle_7_frame_32
+Plate: RPF-7646
+Confidence: 0.50
+--------------------------------------------------
